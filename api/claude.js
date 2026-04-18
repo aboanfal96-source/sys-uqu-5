@@ -1,0 +1,26 @@
+module.exports = async function(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, anthropic-version');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  try {
+    const key = process.env.ANT_KEY || process.env.ANTHROPIC_API_KEY;
+    if (!key) return res.status(500).json({ error: 'API key not configured' });
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify(req.body)
+    });
+
+    const data = await r.json();
+    return res.status(r.status).json(data);
+  } catch(e) {
+    return res.status(500).json({ error: e.message });
+  }
+};
